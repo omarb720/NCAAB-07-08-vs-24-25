@@ -1,0 +1,392 @@
+---
+title: "NCAAComparison"
+author: "Omarion Bitting"
+date: "2025-04-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(caret)
+library(readr)
+library(devtools)
+library(readxl)
+library(ggplot2)
+library(forcats)  
+library(viridis)
+```
+
+```{r}
+advanced2425 <- read.csv("~/Downloads/AdvancedStats24:25Season.csv")
+advanced2425
+
+tourney_teams_adv2425 <- advanced2425 |>
+  filter(grepl("NCAA", School))
+
+
+tourney_teams_adv2425
+```
+
+```{r}
+basic2425 <- read_csv("~/Downloads/BasicStats24:25Season.csv")
+basic2425
+
+tourney_teams_basic2425 <- basic2425 |>
+  filter(grepl("NCAA", School))
+
+tourney_teams_basic2425
+```
+```{r}
+basic0708 <- read_csv("~/Downloads/BasicStats07:08Season.csv")
+basic0708
+
+tourney_teams_basic0708 <- basic0708 |>
+  filter(grepl("NCAA", School))
+
+tourney_teams_basic0708
+```
+```{r}
+advanced0708 <- read_csv("~/Downloads/AdvancedStats07:08Season.csv")
+advanced0708
+
+tourney_teams_adv0708 <- advanced0708 |>
+  filter(grepl("NCAA", School))
+
+tourney_teams_adv0708
+```
+
+```{r}
+#removing NCAA from all the school names now that I have them in a date frame indicating they're tournament teams
+tourney_teams_basic0708$School <- gsub("\\s*\\(?NCAA\\)?", "", tourney_teams_basic0708$School)
+tourney_teams_basic2425$School <- gsub("\\s*\\(?NCAA\\)?", "", tourney_teams_basic2425$School)
+tourney_teams_adv0708$School   <- gsub("\\s*\\(?NCAA\\)?", "", tourney_teams_adv0708$School)
+tourney_teams_adv2425$School   <- gsub("\\s*\\(?NCAA\\)?", "", tourney_teams_adv2425$School)
+```
+
+
+```{r}
+tourney_teams_adv0708 |> 
+  arrange(desc(SRS)) |> 
+  select(School, SRS) |> 
+  head(10)
+
+#Kansas , North Carolina , Memphis and UCLA are top 4 
+```
+
+```{r}
+#Look for UCLA, Kansas , North Carolina , Memphis
+tourney_teams_adv0708 |> 
+  mutate(TS_Rank = rank(-`TS%`)) |> 
+  arrange(TS_Rank) |> 
+  select(TS_Rank, School, `TS%`) |> 
+  head(50)
+
+#Kansas ranked 2nd with .592
+# UNC ranked 15th with .571
+# UCLA ranked 27th with .562
+# Memphis tied 43.0 with .546 TS%
+```
+```{r}
+tourney_teams_adv0708 |> 
+  mutate(TS_EFG = rank(-`eFG%`)) |>  
+  arrange(TS_EFG) |> 
+  select(TS_EFG, School, `eFG%`) |> 
+  head(50)
+
+# Kansas tied 2nd at .567
+# UNC ranked 26th at .530
+# Memphis tied at 28th at .527 
+# UCLA was 32 at .525 %
+```
+
+```{r}
+tourney_teams_adv0708 |> 
+  mutate(TS_TOV = rank(`TOV%`)) |> 
+  arrange(TS_TOV) |> 
+  select(TS_TOV, School, `TOV%`) |> 
+  head(50)
+
+#Memphis ranks 4th 13.8
+# UNC Tied 16th at 15.6
+# UCLA Tied 22nd at 16.1 
+# Kansas Tied at 26th at 16.3
+```
+
+```{r}
+tourney_teams_adv0708 |> 
+  mutate(TS_TRB = rank(-`TRB%`)) |>  
+  arrange(TS_TRB) |> 
+  select(TS_TRB, School, `TRB%`) |> 
+  head(50)
+
+# UNC ranks 1st at 57.2
+# UCLA ranks 2nd with 56.3
+# Kansas tied at 3 with 55.6
+# Memphis ranks 12 at 54.1
+```
+
+```{r}
+tourney_teams_adv2425 |> 
+  arrange(desc(SRS)) |> 
+  select(School, SRS) |> 
+  head(10)
+
+#Duke was 1st at 30.89 SRS , Auburn was 2 at 28.86, Houston was 28.44 , Florida was 4th at 27.52
+
+tourney_teams_adv2425 |> 
+  mutate(TS_Rank2 = rank(-`TS.`)) |>  
+  arrange(TS_Rank2) |> 
+  select(TS_Rank2, School, `TS.`) |> 
+  head(68)
+
+# Duke ranked first at .616 , Florida ranked 21st at .581 , Auburn Tied 22nd at .580 , and Houston was tied 53rd at .552
+
+tourney_teams_adv2425 |> 
+  mutate(TS_EFG2 = rank(-`eFG.`)) |>  
+  arrange(TS_EFG2) |> 
+  select(TS_EFG2, School, `eFG.`) |> 
+  head(50)
+
+#Duke ranked 2nd at .582, Auburn and Florida tied at 18 at .551 and Houston is 48th at .523
+
+tourney_teams_adv2425 |> 
+  mutate(TS_TOV2 = rank(`TOV.`)) |> 
+  arrange(TS_TOV2) |> 
+  select(TS_TOV2, School, `TOV.`) |> 
+  head(50)
+
+#Auburn ranks 4th at 11.5 , Houston tied 6th at 11.8 , Duke tied at 8 12.1 , Florida tied at 18 at 12.9 
+
+tourney_teams_adv2425 |> 
+  mutate(TS_TRB2 = rank(-`TRB.`)) |>  
+  arrange(TS_TRB2) |> 
+  select(TS_TRB2, School, `TRB.`) |> 
+  head(50)
+
+#Florida ranked 5th 55.7 , duke ranked 6th at 55.6 , Houston ranked 14 at 53.9 and Auburn tied 25th at 53.0 
+```
+
+```{r}
+# Remove non-breaking spaces and trim leading/trailing spaces
+tourney_teams_adv0708$School <- gsub("\u00A0", " ", tourney_teams_adv0708$School)  # replace non-breaking space with regular space
+tourney_teams_adv0708$School <- trimws(tourney_teams_adv0708$School)              # trim regular spaces
+
+#I was having trouble accessing the school names when trying to search for them in School 
+
+```
+
+
+```{r}
+
+final_four_0708 <- c("North Carolina", "Kansas", "UCLA", "Memphis")
+
+finalFour0708 <- tourney_teams_adv0708 |>
+  select(School, SRS, `TS%`, `eFG%`, `TOV%`, `TRB%`) |>
+  filter(School %in% final_four_0708)
+
+print(finalFour0708)
+
+```
+
+
+
+
+```{r}
+tourney_teams_adv0708 <- tourney_teams_adv0708 |> 
+  mutate(FinalFour = ifelse(School %in% c("North Carolina", "Kansas", "UCLA", "Memphis"), "Final Four", "Other"))
+
+ggplot(tourney_teams_adv0708, aes(x = reorder(School, SRS), y = SRS, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Simple Rating System – 2007/08 NCAA Tournament Teams",
+       x = "Team", y = "SRS") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggplot(tourney_teams_adv0708, aes(x = reorder(School, `TS%`), y = `TS%`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "True Shooting % – 2007/08 NCAA Tournament Teams",
+       x = "Team", y = "TS%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.y = element_text(size = 6),  # smaller team names
+    plot.margin = margin(10, 10, 10, 10)
+  )
+
+ggplot(tourney_teams_adv0708, aes(x = reorder(School, `eFG%`), y = `eFG%`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Effective FG% – 2007/08 NCAA Tournament Teams",
+       x = "Team", y = "eFG%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggplot(tourney_teams_adv0708, aes(x = reorder(School, -`TOV%`), y = `TOV%`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Turnover % – 2007/08 NCAA Tournament Teams",
+       x = "Team", y = "TOV%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggplot(tourney_teams_adv0708, aes(x = reorder(School, `TRB%`), y = `TRB%`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Total Rebound % – 2007/08 NCAA Tournament Teams",
+       x = "Team", y = "TRB%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 6))
+
+```
+```{r}
+tourney_teams_adv2425 <- tourney_teams_adv2425 |> 
+  mutate(FinalFour = ifelse(School %in% c("Auburn", "Florida", "Duke", "Houston"), "Final Four", "Other"))
+
+ggplot(tourney_teams_adv2425, aes(x = reorder(School, SRS), y = SRS, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Simple Rating System – 2024/25 NCAA Tournament Teams",
+       x = "Team", y = "SRS") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 5.5))
+
+
+ggplot(tourney_teams_adv2425, aes(x = reorder(School, `TS.`), y = `TS.`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "True Shooting % – 2024/25 NCAA Tournament Teams",
+       x = "Team", y = "TS%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.y = element_text(size = 5.5),  # smaller team names
+  )
+
+ggplot(tourney_teams_adv2425, aes(x = reorder(School, `eFG.`), y = `eFG.`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Effective FG% – 2024/25 NCAA Tournament Teams",
+       x = "Team", y = "eFG%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 5.5))
+
+ggplot(tourney_teams_adv2425, aes(x = reorder(School, -`TOV.`), y = `TOV.`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Turnover % – 2024/25 NCAA Tournament Teams",
+       x = "Team", y = "TOV%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 5.5))
+
+ggplot(tourney_teams_adv2425, aes(x = reorder(School, `TRB.`), y = `TRB.`, fill = FinalFour)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Total Rebound % – 2024/25 NCAA Tournament Teams",
+       x = "Team", y = "TRB%") +
+  scale_fill_manual(values = c("Final Four" = "steelblue", "Other" = "gray80")) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.y = element_text(size = 5.5))
+```
+
+```{r}
+# Remove non-breaking spaces and trim leading/trailing spaces
+tourney_teams_adv0708$School <- gsub("\u00A0", " ", tourney_teams_adv0708$School)  # replace non-breaking space with regular space
+tourney_teams_adv0708$School <- trimws(tourney_teams_adv0708$School)
+final_four_0708 <- c("North Carolina", "Kansas", "UCLA", "Memphis")
+
+finalFour0708 <- tourney_teams_adv0708 |>
+  select(School, SRS, `TS%`, `eFG%`, `TOV%`, `TRB%`) |>
+  filter(School %in% final_four_0708)
+
+finalFour0708
+
+tourney_teams_adv2425$School <- gsub("\u00A0", " ", tourney_teams_adv2425$School)  # replace non-breaking space with regular space
+tourney_teams_adv2425$School <- trimws(tourney_teams_adv2425$School)  
+final_four_2425 <- c("Auburn", "Florida", "Duke", "Houston")
+
+finalFour2425 <- tourney_teams_adv2425 |>
+  select(School, SRS, `TS.`, `eFG.`, `TOV.`, `TRB.`) |>
+  filter(School %in% final_four_2425)
+
+finalFour2425
+
+finalFour2425 <- finalFour2425 |> #renaming columns in order to accurately bind the two dataframes
+  rename(`TS%` = `TS.`,
+         `eFG%` = `eFG.`,
+         `TOV%` = `TOV.`,
+         `TRB%` = `TRB.`
+         )
+
+both_finalfours <- bind_rows(finalFour0708, finalFour2425)
+
+both_finalfours
+```
+
+```{r}
+both_finalfours <- both_finalfours |> 
+  mutate(Season = 
+           case_when(School == "Kansas" ~ "07/08",
+                     School == "Memphis" ~ "07/08",
+                     School == "North Carolina" ~ "07/08",
+                     School == "UCLA" ~ "07/08",
+                     School == "Auburn" ~ "24/25",
+                     School == "Duke" ~ "24/25",
+                     School == "Florida" ~ "24/25",
+                     School == "Houston" ~ "24/25")
+         )
+
+both_finalfours
+```
+```{r}
+ggplot(both_finalfours, aes(x = reorder(School, SRS), y = SRS, fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Simple Rating System – Final Four Comparison",
+       x = "School", y = "SRS",
+       fill = "Season") +
+  theme_minimal()
+
+ggplot(both_finalfours, aes(x = reorder(School, `TS%`), y = `TS%` , fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "True Shooting Percentage – Final Four Comparison",
+       x = "School", y = "TS%",
+       fill = "Season") +
+  theme_minimal()
+
+ggplot(both_finalfours, aes(x = reorder(School, `eFG%`), y = `eFG%` , fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Effective Field Goal Percentage – Final Four Comparison",
+       x = "School", y = "eFG%",
+       fill = "Season") +
+  theme_minimal()
+
+ggplot(both_finalfours, aes(x = reorder(School, -`TOV%`), y = `TOV%` , fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Turnover Percentage – Final Four Comparison",
+       x = "School", y = "TOV%",
+       fill = "Season") +
+  theme_minimal()
+
+ggplot(both_finalfours, aes(x = reorder(School, `TRB%`), y = `TRB%` , fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Rebound Percentage – Final Four Comparison",
+       x = "School", y = "TRB%",
+       fill = "Season") +
+  theme_minimal()
+
+```
+
+
